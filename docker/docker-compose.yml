@@ -1,0 +1,140 @@
+version: "3"
+
+services:
+  base_image:
+    build: ./base_image
+    image: base_image
+
+  haproxy1:
+    build: ./haproxy
+    hostname: ha1
+    links:
+      - base_image
+      - nginx1
+      - nginx2
+    ports:
+      # Traffic
+      - "80:80"
+      # Stats
+      - "8181:8181"
+    restart: on-failure:5
+    volumes:
+      - ./haproxy/config:/usr/local/etc/haproxy
+      - /usr/local/etc/haproxy/errors/
+    networks:
+      - default
+      - sql_net
+
+  haproxy2:
+    build: ./haproxy
+    hostname: ha2
+    links:
+      - base_image
+      - nginx1
+      - nginx2
+    ports:
+      # Traffic
+      - "82:80"
+      # Stats
+      - "8282:8181"
+    restart: on-failure:5
+    volumes:
+      - ./haproxy/config:/usr/local/etc/haproxy
+      - /usr/local/etc/haproxy/errors/
+    networks:
+      - default
+      - sql_net
+
+  # mongodb:
+  #   build: ./mongodb
+  #   links:
+  #     - base_image
+  #   ports:
+  #     - "27017:27017"
+  #   restart: on-failure:5
+    # volumes:
+    #   - ~/data/db:/data/db
+
+  mysql:
+    build: ./mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=1234
+    ports:
+      - "3307:3306"
+    networks:
+      - default
+      - sql_net
+
+# ============ Nginx ============
+
+  nginx_base:
+    build: ./nginx_base
+    image: nginx_base
+    links:
+      - base_image
+
+  nginx1:
+    build: ./nginx1
+    links:
+      - nginx_base
+      - node1
+    restart: on-failure:5
+
+  nginx2:
+    build: ./nginx2
+    links:
+      - nginx_base
+      - node2
+    restart: on-failure:5
+
+# ============ Node ============
+  node1:
+    build: ./node
+    image: node1
+    links:
+      - base_image
+      - mysql
+    networks:
+      default:
+      sql_net:
+        aliases:
+         - node1
+    volumes:
+      - /vagrant/src/server:/usr/src/app
+      - /usr/src/app/node_modules
+
+  node2:
+    build: ./node
+    image: node2
+    links:
+      - base_image
+      - mysql
+    networks:
+      default:
+      sql_net:
+        aliases:
+         - node2
+    volumes:
+      - /vagrant/src/server:/usr/src/app
+      - /usr/src/app/node_modules
+
+# ============ Redis ============
+
+  # redis1:
+  #   build: ./redis
+  #   links:
+  #     - base_image
+  #   ports:
+  #     - "6479:6479"
+  #   restart: on-failure:5
+
+  # redis2:
+  #   build: ./redis
+  #   links:
+  #     - base_image
+  #   ports:
+  #     - "6480:6479"
+  #   restart: on-failure:5
+
+networks:
+  sql_net:
