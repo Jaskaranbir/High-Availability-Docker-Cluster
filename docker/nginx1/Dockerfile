@@ -1,6 +1,6 @@
-FROM nginx_base
+FROM ct_nginx_base
 
-MAINTAINER Jaskaranbir Dhillon
+LABEL maintainer Jaskaranbir Dhillon
 
 COPY node1 /etc/nginx/sites-available/
 

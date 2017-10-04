@@ -1,15 +1,12 @@
 version: "3"
 
 services:
-  base_image:
-    build: ./base_image
-    image: base_image
-
   haproxy1:
-    build: ./haproxy
+    build: ./docker/haproxy
+    container_name: ct_haproxy1
     hostname: ha1
+    image: ct_haproxy1_image
     links:
-      - base_image
       - nginx1
       - nginx2
     ports:
@@ -19,17 +16,18 @@ services:
       - "8181:8181"
     restart: on-failure:5
     volumes:
-      - ./haproxy/config:/usr/local/etc/haproxy
+      - ./docker/haproxy/config:/usr/local/etc/haproxy
       - /usr/local/etc/haproxy/errors/
     networks:
       - default
       - sql_net
 
   haproxy2:
-    build: ./haproxy
+    build: ./docker/haproxy
+    container_name: ct_haproxy2
     hostname: ha2
+    image: ct_haproxy2_image
     links:
-      - base_image
       - nginx1
       - nginx2
     ports:
@@ -39,49 +37,44 @@ services:
       - "8282:8181"
     restart: on-failure:5
     volumes:
-      - ./haproxy/config:/usr/local/etc/haproxy
+      - ./docker/haproxy/config:/usr/local/etc/haproxy
       - /usr/local/etc/haproxy/errors/
     networks:
       - default
       - sql_net
 
-  # mongodb:
-  #   build: ./mongodb
-  #   links:
-  #     - base_image
-  #   ports:
-  #     - "27017:27017"
-  #   restart: on-failure:5
-    # volumes:
-    #   - ~/data/db:/data/db
-
   mysql:
-    build: ./mysql
+    build: ./docker/mysql
+    container_name: ct_mysql
     environment:
       - MYSQL_ROOT_PASSWORD=1234
+    image: ct_mysql_image
     ports:
-      - "3307:3306"
+      # In case there's also MySQL isntalled locally
+      - "3406:3306"
     networks:
       - default
       - sql_net
 
 # ============ Nginx ============
-
   nginx_base:
-    build: ./nginx_base
-    image: nginx_base
-    links:
-      - base_image
+    build: ./docker/nginx_base
+    container_name: ct_nginx_base
+    image: ct_nginx_base_image
 
   nginx1:
-    build: ./nginx1
+    build: ./docker/nginx1
+    container_name: ct_nginx1
+    image: ct_nginx1_image
     links:
       - nginx_base
       - node1
     restart: on-failure:5
 
   nginx2:
-    build: ./nginx2
+    build: ./docker/nginx2
+    container_name: ct_nginx2
+    image: ct_nginx2_image
     links:
       - nginx_base
       - node2
@@ -89,10 +82,10 @@ services:
 
 # ============ Node ============
   node1:
-    build: ./node
-    image: node1
-    links:
-      - base_image
+    build: ./docker/node
+    container_name: ct_node1
+    image: ct_node1_image
+    links: 
       - mysql
     networks:
       default:
@@ -100,14 +93,13 @@ services:
         aliases:
          - node1
     volumes:
-      - /vagrant/src/server:/usr/src/app
-      - /usr/src/app/node_modules
+      - ./src:/usr/src/app
 
   node2:
-    build: ./node
-    image: node2
+    build: ./docker/node
+    container_name: ct_node2
+    image: ct_node2_image
     links:
-      - base_image
       - mysql
     networks:
       default:
@@ -115,26 +107,20 @@ services:
         aliases:
          - node2
     volumes:
-      - /vagrant/src/server:/usr/src/app
-      - /usr/src/app/node_modules
+      - ./src:/usr/src/app
 
 # ============ Redis ============
+  redis1:
+    build: ./docker/redis
+    ports:
+      - "6479:6379"
+    restart: on-failure:5
 
-  # redis1:
-  #   build: ./redis
-  #   links:
-  #     - base_image
-  #   ports:
-  #     - "6479:6479"
-  #   restart: on-failure:5
-
-  # redis2:
-  #   build: ./redis
-  #   links:
-  #     - base_image
-  #   ports:
-  #     - "6480:6479"
-  #   restart: on-failure:5
+  redis2:
+    build: ./docker/redis
+    ports:
+      - "6480:6379"
+    restart: on-failure:5
 
 networks:
   sql_net:

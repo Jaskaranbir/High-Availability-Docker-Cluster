@@ -1,5 +1,5 @@
 apps:
   - name: 'APP'
-    script: 'server.js'
+    script: 'server/server.js'
     instances: 1
     watch: true
