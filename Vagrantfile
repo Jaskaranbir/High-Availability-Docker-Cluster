@@ -45,6 +45,6 @@ Vagrant.configure(2) do |config|
     codetalkvm.vm.provision "shell", inline: "apt-get install -y mysql-client"
     codetalkvm.vm.provision "docker"
     codetalkvm.vm.provision :docker
-    codetalkvm.vm.provision :docker_compose, yml: ["/vagrant/docker/docker-compose.yml"]
+    codetalkvm.vm.provision :docker_compose, compose_version: "1.15.0", project_name: "CodeTalk", yml: ["/vagrant/docker-compose.yml"]
   end
 end
