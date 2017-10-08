@@ -1,6 +1,8 @@
 version: "3"
 
 services:
+
+# ============ HAProxy ============
   haproxy1:
     build: ./docker/haproxy
     container_name: ct_haproxy1
@@ -43,15 +45,29 @@ services:
       - default
       - sql_net
 
-  mysql:
+# ============ MySQL ============
+  mysql1:
     build: ./docker/mysql
-    container_name: ct_mysql
+    container_name: ct_mysql1
     environment:
       - MYSQL_ROOT_PASSWORD=1234
-    image: ct_mysql_image
+    image: ct_mysql_image1
     ports:
       # In case there's also MySQL isntalled locally
-      - "3406:3306"
+      - "3409:3306"
+    networks:
+      - default
+      - sql_net
+
+  mysql2:
+    build: ./docker/mysql
+    container_name: ct_mysql2
+    environment:
+      - MYSQL_ROOT_PASSWORD=1234
+    image: ct_mysql_image2
+    ports:
+      # In case there's also MySQL isntalled locally
+      - "3410:3306"
     networks:
       - default
       - sql_net
@@ -86,7 +102,8 @@ services:
     container_name: ct_node1
     image: ct_node1_image
     links: 
-      - mysql
+      - mysql1
+      - mysql2
     networks:
       default:
       sql_net:
@@ -100,7 +117,8 @@ services:
     container_name: ct_node2
     image: ct_node2_image
     links:
-      - mysql
+      - mysql1
+      - mysql2
     networks:
       default:
       sql_net:
@@ -112,12 +130,16 @@ services:
 # ============ Redis ============
   redis1:
     build: ./docker/redis
+    container_name: ct_redis1
+    image: ct_redis1_image
     ports:
       - "6479:6379"
     restart: on-failure:5
 
   redis2:
     build: ./docker/redis
+    container_name: ct_redis2
+    image: ct_redis2_image
     ports:
       - "6480:6379"
     restart: on-failure:5
